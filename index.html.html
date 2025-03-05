@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>איסוף נתוני מצלמות - ATG-AVI GOHAR</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            direction: rtl;
+        }
+        
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .watermark {
+            position: absolute;
+            bottom: 5px;
+            left: 10px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px; /* גדול יותר למובייל */
+        }
+        
+        select {
+            background-color: white;
+            height: 40px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .location-info {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .camera-container {
+            margin-bottom: 15px;
+        }
+        
+        #cameraPreview {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        
+        #capturedImage {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        
+        .compass-container {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .compass {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto;
+        }
+        
+        .compass-circle {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid #333;
+            top: 10px;
+            left: 10px;
+        }
+        
+        .compass-arrow {
+            position: absolute;
+            top: 10px;
+            left: 75px;
+            width: 0;
+            height: 100px;
+            border-left: 2px solid red;
+            transform-origin: bottom center;
+        }
+        
+        .angle-display {
+            margin-top: 5px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .coordinates-display {
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .error-message {
+            color: red;
+            margin-top: 5px;
+        }
+        
+        .success-message {
+            background-color: #dff0d8;
+            color: #3c763d;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: center;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .data-list {
+            margin-top: 20px;
+        }
+        
+        .data-item {
+            background-color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .data-item h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        
+        .item-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .export-btn {
+            background-color: #007bff;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>איסוף נתוני מצלמות</h1>
+        <span class="watermark">ATG-AVI GOHAR</span>
+    </header>
+    
+    <div class="container">
+        <div class="tab-container">
+            <div class="tab active" onclick="switchTab('form')">טופס</div>
+            <div class="tab" onclick="switchTab('data')">נתונים שמורים</div>
+        </div>
+        
+        <div id="form" class="tab-content active">
+            <div class="success-message" id="successMessage">
+                הנתונים נשמרו בהצלחה!
+            </div>
+            
+            <div class="form-group">
+                <label for="city">ישוב *</label>
+                <input type="text" id="city" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="siteName">שם אתר *</label>
+                <input type="text" id="siteName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="affiliation">שיוך *</label>
+                <select id="affiliation" required>
+                    <option value="">בחר...</option>
+                    <option value="משטרה">משטרה</option>
+                    <option value="עירייה">עירייה</option>
+                    <option value="פרטי">פרטי</option>
+                    <option value="משרד הביטחון">משרד הביטחון</option>
+                    <option value="בטחון פנים">בטחון פנים</option>
+                    <option value="צה&quot;ל">צה"ל</option>
+                    <option value="רשות מקומית">רשות מקומית</option>
+                    <option value="מועצה">מועצה</option>
+                    <option value="משרד התחבורה">משרד התחבורה</option>
+                    <option value="רמ&quot;י">רמ"י</option>
+                    <option value="עירוני">עירוני</option>
+                    <option value="אחר">אחר</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="cameraType">סוג המצלמה *</label>
+                <input type="text" id="cameraType" required>
+            </div>
+            
+            <div class="form-group">
+                <label>קואורדינטות (מתקבלות אוטומטית) *</label>
+                <div class="location-info">
+                    ממתין לקבלת מיקום... אנא ודא שאישרת גישה למיקום.
+                </div>
+                <div class="coordinates-display" id="coordinatesDisplay"></div>
+                <div class="error-message" id="locationError"></div>
+                <button type="button" onclick="refreshLocation()">רענן מיקום</button>
+            </div>
+            
+            <div class="form-group">
+                <label>זווית במעלות (התכוון עם המכשיר) *</label>
+                <div class="compass-container">
+                    <div class="compass">
+                        <div class="compass-circle"></div>
+                        <div class="compass-arrow" id="compassArrow"></div>
+                    </div>
+                    <div class="angle-display" id="angleDisplay">0°</div>
+                </div>
+                <div class="error-message" id="compassError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="policeConnection">חיבור למשטרה *</label>
+                <select id="policeConnection" required>
+                    <option value="">בחר...</option>
+                    <option value="כן">כן</option>
+                    <option value="לא">לא</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="vmsType">סוג VMS</label>
+                <input type="text" id="vmsType">
+            </div>
+            
+            <div class="form-group">
+                <label for="cameraPhoto">צילום המצלמה</label>
+                <div class="camera-container">
+                    <video id="cameraPreview" autoplay></video>
+                    <img id="capturedImage" src="" alt="תמונה שצולמה">
+                    <button type="button" id="captureBtn" onclick="toggleCamera()">פתח מצלמה</button>
+                    <button type="button" id="takePhotoBtn" onclick="takePhoto()" style="display: none;">צלם תמונה</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">הערות</label>
+                <textarea id="notes" rows="3"></textarea>
+            </div>
+            
+            <button type="button" id="saveButton" onclick="saveData()">שמור נתונים</button>
+        </div>
+        
+        <div id="data" class="tab-content">
+            <button class="btn export-btn" onclick="exportToCSV()">ייצא לקובץ CSV</button>
+            <button class="btn export-btn" style="background-color: #ff9800;" onclick="exportForMap()">ייצא למפת מצלמות</button>
+            
+            <div id="savedDataList" class="data-list">
+                <!-- כאן יוצגו הנתונים השמורים -->
+                <p>אין עדיין נתונים שמורים</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // משתנים גלובליים
+        let currentLocation = null;
+        let currentAngle = 0;
+        let capturedImageData = null;
+        let stream = null;
+        let savedData = [];
+        
+        // טעינת נתונים שמורים מהאחסון המקומי
+        function loadSavedData() {
+            const storedData = localStorage.getItem('cameraData');
+            if (storedData) {
+                try {
+                    savedData = JSON.parse(storedData);
+                    updateDataList();
+                } catch (e) {
+                    console.error('שגיאה בטעינת נתונים:', e);
+                    savedData = [];
+                }
+            }
+        }
+        
+        // עדכון רשימת הנתונים השמורים
+        function updateDataList() {
+            const dataListElement = document.getElementById('savedDataList');
+            
+            if (savedData.length === 0) {
+                dataListElement.innerHTML = '<p>אין עדיין נתונים שמורים</p>';
+                return;
+            }
+            
+            let html = '';
+            savedData.forEach((item, index) => {
+                html += `
+                    <div class="data-item">
+                        <h3>${item.siteName} (${item.city})</h3>
+                        <div class="item-details">
+                            <p><strong>שיוך:</strong> ${item.affiliation}</p>
+                            <p><strong>סוג מצלמה:</strong> ${item.cameraType}</p>
+                            <p><strong>קואורדינטות:</strong> X=${item.x.toFixed(2)}, Y=${item.y.toFixed(2)}</p>
+                            <p><strong>זווית:</strong> ${item.angle}°</p>
+                            <p><strong>תאריך:</strong> ${new Date(item.timestamp).toLocaleString()}</p>
+                        </div>
+                        <button class="btn" onclick="deleteItem(${index})">מחק</button>
+                    </div>
+                `;
+            });
+            
+            dataListElement.innerHTML = html;
+        }
+        
+        // מחיקת פריט מהרשימה
+        function deleteItem(index) {
+            if (confirm('האם אתה בטוח שברצונך למחוק פריט זה?')) {
+                savedData.splice(index, 1);
+                localStorage.setItem('cameraData', JSON.stringify(savedData));
+                updateDataList();
+            }
+        }
+        
+        // ייצוא הנתונים לקובץ CSV
+        function exportToCSV() {
+            if (savedData.length === 0) {
+                alert('אין נתונים לייצוא');
+                return;
+            }
+            
+            // הוספת BOM לתמיכה בעברית
+            let csvContent = '\uFEFF';
+            
+            // יצירת כותרות
+            csvContent += 'ישוב,שם אתר,שיוך,סוג המצלמה,קואורדינטה X,קואורדינטה Y,זווית במעלות,חיבור למשטרה,סוג VMS,הערות,תאריך\n';
+            
+            // הוספת שורות הנתונים
+            savedData.forEach(item => {
+                const row = [
+                    escapeCsvValue(item.city),
+                    escapeCsvValue(item.siteName),
+                    escapeCsvValue(item.affiliation),
+                    escapeCsvValue(item.cameraType),
+                    item.x,
+                    item.y,
+                    item.angle,
+                    escapeCsvValue(item.policeConnection),
+                    escapeCsvValue(item.vmsType || ''),
+                    escapeCsvValue(item.notes || ''),
+                    new Date(item.timestamp).toLocaleString()
+                ];
+                
+                csvContent += row.join(',') + '\n';
+            });
+            
+            // יצירת קובץ להורדה
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `camera_data_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // ייצוא למסד נתונים של מפת המצלמות
+        function exportForMap() {
+            if (savedData.length === 0) {
+                alert('אין נתונים לייצוא');
+                return;
+            }
+            
+            // יצירת מבנה נתונים תואם למפה
+            let mapDataContent = '';
+            
+            savedData.forEach(item => {
+                // סדר העמודות: ישוב, שם אתר, שיוך, סוג המצלמה, קואורדינטה X, קואורדינטה Y, זווית במעלות, חיבור למשטרה, סוג VMS
+                const row = [
+                    escapeCsvValue(item.city),
+                    escapeCsvValue(item.siteName),
+                    escapeCsvValue(item.affiliation),
+                    escapeCsvValue(item.cameraType),
+                    item.x,
+                    item.y,
+                    item.angle,
+                    escapeCsvValue(item.policeConnection),
+                    escapeCsvValue(item.vmsType || '')
+                ];
+                
+                mapDataContent += row.join(',') + '\n';
+            });
+            
+            // יצירת קובץ להורדה
+            const blob = new Blob(['\uFEFF' + mapDataContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `map_data_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // לברוח מתווים מיוחדים ב-CSV
+        function escapeCsvValue(value) {
+            if (!value) return '';
+            value = String(value);
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                return '"' + value.replace(/"/g, '""') + '"';
+            }
+            return value;
+        }
+        
+        // מעבר בין לשוניות
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'data') {
+                updateDataList();
+            }
+        }
+        
+        // הפעלת המצלמה
+        function toggleCamera() {
+            if (stream) {
+                // סגירת המצלמה
+                stopCamera();
+                document.getElementById('captureBtn').textContent = 'פתח מצלמה';
+                document.getElementById('takePhotoBtn').style.display = 'none';
+                document.getElementById('cameraPreview').style.display = 'none';
+            } else {
+                // הודעה שמסבירה למשתמש שיש לאשר גישה למצלמה
+                document.getElementById('captureBtn').textContent = 'ממתין לאישור...';
+                alert('כעת תתבקש/י לאשר גישה למצלמה. נא לאשר כדי להמשיך.');
+                
+                // פתיחת המצלמה
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                        .then(function(videoStream) {
+                            stream = videoStream;
+                            const video = document.getElementById('cameraPreview');
+                            video.srcObject = videoStream;
+                            video.style.display = 'block';
+                            document.getElementById('captureBtn').textContent = 'סגור מצלמה';
+                            document.getElementById('takePhotoBtn').style.display = 'block';
+                            document.getElementById('capturedImage').style.display = 'none';
+                        })
+                        .catch(function(error) {
+                            console.error('שגיאה בפתיחת המצלמה:', error);
+                            document.getElementById('captureBtn').textContent = 'פתח מצלמה';
+                            
+                            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                                alert('הגישה למצלמה נדחתה. כדי להשתמש במצלמה, יש לאשר גישה בהגדרות הדפדפן.');
+                            } else {
+                                alert('לא ניתן לגשת למצלמה. אנא ודא שיש לך הרשאות מתאימות ושהמצלמה אינה בשימוש על ידי אפליקציה אחרת.');
+                            }
+                        });
+                } else {
+                    document.getElementById('captureBtn').textContent = 'פתח מצלמה';
+                    alert('הדפדפן שלך אינו תומך בגישה למצלמה');
+                }
+            }
+        }
+        
+        // סגירת המצלמה
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+                stream = null;
+            }
+        }
+        
+        // צילום תמונה
+        function takePhoto() {
+            if (!stream) return;
+            
+            const video = document.getElementById('cameraPreview');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // שמירת התמונה כ-Data URL
+            capturedImageData = canvas.toDataURL('image/jpeg');
+            
+            // הצגת התמונה שצולמה
+            const capturedImage = document.getElementById('capturedImage');
+            capturedImage.src = capturedImageData;
+            capturedImage.style.display = 'block';
+            
+            // סגירת המצלמה אחרי הצילום
+            stopCamera();
+            document.getElementById('cameraPreview').style.display = 'none';
+            document.getElementById('captureBtn').textContent = 'פתח מצלמה מחדש';
+            document.getElementById('takePhotoBtn').style.display = 'none';
+        }
+        
+        // קבלת מיקום נוכחי
+        function getLocation() {
+            if (navigator.geolocation) {
+                // מציג הודעה שמסבירה למשתמש שיש לאשר גישה למיקום
+                document.querySelector('.location-info').textContent = 
+                    'נא לאשר גישה למיקום כשתתבקש/י...';
+                
+                // שאלה לקבלת גישה למיקום
+                navigator.geolocation.getCurrentPosition(
+                    positionSuccess, 
+                    positionError, 
+                    { 
+                        enableHighAccuracy: true, 
+                        timeout: 10000, 
+                        maximumAge: 0 
+                    }
+                );
+            } else {
+                document.getElementById('locationError').textContent = 'הדפדפן שלך אינו תומך בשירותי מיקום';
+            }
+        }
+        
+        // פונקציה לרענון המיקום
+        function refreshLocation() {
+            document.querySelector('.location-info').textContent = 'מרענן נתוני מיקום...';
+            document.getElementById('locationError').textContent = '';
+            document.getElementById('coordinatesDisplay').textContent = '';
+            getLocation();
+        }
+        
+        // טיפול בהצלחת קבלת מיקום
+        function positionSuccess(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            
+            // המרה מ-WGS84 ל-ITM
+            const itmCoords = wgs84ToItm(latitude, longitude);
+            
+            currentLocation = {
+                lat: latitude,
+                lng: longitude,
+                x: itmCoords.x,
+                y: itmCoords.y,
+                accuracy: position.coords.accuracy
+            };
+            
+            document.querySelector('.location-info').textContent = 
+                `דיוק: ${Math.round(position.coords.accuracy)} מטרים`;
+            
+            document.getElementById('coordinatesDisplay').textContent = 
+                `WGS84: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n` +
+                `ITM: X=${itmCoords.x.toFixed(2)}, Y=${itmCoords.y.toFixed(2)}`;
+            
+            document.getElementById('locationError').textContent = '';
+        }
+        
+        // טיפול בשגיאת מיקום
+        function positionError(error) {
+            let errorMessage = 'שגיאה בקבלת המיקום';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'משתמש לא אישר גישה למיקום';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'מידע המיקום אינו זמין';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'בקשת המיקום עברה את הזמן המוקצב';
+                    break;
+            }
+            
+            document.getElementById('locationError').textContent = errorMessage;
+            document.querySelector('.location-info').textContent = 'לא ניתן לקבל מיקום';
+        }
+        
+        // המרה מ-WGS84 ל-ITM (רשת ישראל)
+        function wgs84ToItm(lat, lng) {
+            // חישוב המרה מקורב. לדיוק מלא נדרשת ספריית המרה כמו proj4js
+            
+            // פקטורים להמרה מקורבת
+            const centerLat = 31.7;
+            const centerLng = 35.2;
+            const scaleX = 110000;  // מטרים לכל מעלה בקו רוחב באזור ישראל
+            const scaleY = 111000;  // מטרים לכל מעלה בקו אורך באזור ישראל
+            
+            const x = 219534 + ((lng - centerLng) * scaleX);
+            const y = 626907 + ((lat - centerLat) * scaleY);
+            
+            return { x, y };
+        }
+        
+        // קבלת כיוון המכשיר
+        function startCompass() {
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', orientationHandler, false);
+                document.getElementById('compassError').textContent = '';
+            } else {
+                document.getElementById('compassError').textContent = 'הדפדפן שלך אינו תומך בחיישן כיוון';
+            }
+        }
+        
+        // טיפול באירועי כיוון
+        function orientationHandler(event) {
+            if (event.webkitCompassHeading) {
+                // Safari בiOS
+                currentAngle = event.webkitCompassHeading;
+            } else if (event.alpha) {
+                // אנדרואיד וכרום
+                currentAngle = 360 - event.alpha;
+            } else {
+                return;
+            }
+            
+            // עדכון חיצי המצפן והזווית
+            const arrow = document.getElementById('compassArrow');
+            arrow.style.transform = `rotate(${currentAngle}deg)`;
+            
+            document.getElementById('angleDisplay').textContent = `${Math.round(currentAngle)}°`;
+        }
+        
+        // שמירת הנתונים
+        function saveData() {
+            // בדיקת תקינות
+            const city = document.getElementById('city').value.trim();
+            const siteName = document.getElementById('siteName').value.trim();
+            const affiliation = document.getElementById('affiliation').value;
+            const cameraType = document.getElementById('cameraType').value.trim();
+            const policeConnection = document.getElementById('policeConnection').value;
+            const vmsType = document.getElementById('vmsType').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+            
+            // בדיקת שדות חובה
+            if (!city || !siteName || !affiliation || !cameraType || !policeConnection) {
+                alert('אנא מלא את כל שדות החובה המסומנים ב-*');
+                return;
+            }
+            
+            // בדיקת מיקום
+            if (!currentLocation) {
+                if (!confirm('לא התקבלו נתוני מיקום. האם להמשיך בכל זאת?')) {
+                    return;
+                }
+            }
+            
+            // יצירת אובייקט הנתונים
+            const dataObj = {
+                city,
+                siteName,
+                affiliation,
+                cameraType,
+                x: currentLocation ? currentLocation.x : 0,
+                y: currentLocation ? currentLocation.y : 0,
+                lat: currentLocation ? currentLocation.lat : 0,
+                lng: currentLocation ? currentLocation.lng : 0,
+                angle: Math.round(currentAngle),
+                policeConnection,
+                vmsType,
+                notes,
+                image: capturedImageData,
+                timestamp: new Date().toISOString()
+            };
+            
+            // הוספה למערך הנתונים
+            savedData.push(dataObj);
+            
+            // שמירה באחסון המקומי - המרה לפורמט JSON
+            try {
+                localStorage.setItem('cameraData', JSON.stringify(savedData));
+                
+                // איפוס הטופס
+                resetForm();
+                
+                // הצגת הודעת הצלחה
+                
